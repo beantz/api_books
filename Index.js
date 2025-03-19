@@ -1,5 +1,5 @@
 import 'dotenv-safe/config.js';
-import express from 'express';
+import express, { Router } from 'express';
 import livrosRouter from './src/route/livros.js';
 import loginRouter from './src/route/login.js';
 
@@ -10,3 +10,5 @@ app.use(loginRouter);
 app.use(livrosRouter);
  
 app.listen(3000, () => console.log("Servidor escutando na porta 3000..."));
+
+import db from './src/config/dbconfig.js';

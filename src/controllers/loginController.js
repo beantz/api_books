@@ -1,30 +1,38 @@
 import jwt from 'jsonwebtoken';
 import 'dotenv-safe/config.js';
+import { body, validationResult } from 'express-validator';
+import express from 'express';
 
 class loginController {
 
   async auth(req, res) {
-      //verificar se dados enviados existem no banco
-      if(req.body.user === "luiz" && req.body.password === 123){
-  
-        const id = 1; //esse id viria do banco de dados
-        try {
-          const token = await jwt.sign({ id }, process.env.SECRET, {
-          expiresIn: 300 // expires in 5min
-          });
 
-          return res.json({ auth: true, token: token });
+    // Verifica os erros de validação
+    const errors = validationResult(req);
 
-        } catch (error) {
+    // Se houver erros, retorna uma resposta com os erros
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-          console.error("Erro ao gerar token", error);
-          return res.status(500).json({message: "Erro interno no servidor"});
+    //verificar se dados enviados existem no banco
+    //iMPLEMENTAR LOGICA
+    
+    const id = 1; //esse id viria do banco de dados
+    try {
+      const token = await jwt.sign({ id }, process.env.SECRET, {
+      expiresIn: 300 // expires in 5min
+      });
 
-        }
+      return res.json({ auth: true, token: token });
+
+    } catch (error) {
+
+      console.error("Erro ao gerar token", error);
+      return res.status(500).json({message: "Erro interno no servidor"});
+
+    }
         
-      } else {
-          res.status(500).json({message: 'Login inválido!'});
-      }
   }
 
   logout(req, res) {
@@ -35,9 +43,16 @@ class loginController {
 
   async register(req,res) {
 
-    if (!req.body.name || !req.body.email) {
-      return res.status(401).json({ message: 'Nome e e-mail precisam ser fornecidos!' });
+    // Verifica os erros de validação
+    const errors = validationResult(req);
+
+    // Se houver erros, retorna uma resposta com os erros
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
+
+    //verificar se ja não existe um usuario cadastrado no banco com o mesmo email
+    //IMPLEMENTAR LOGICA
 
     try {
 

@@ -22,6 +22,14 @@
   - Middleware de autenticação JWT
   - Criptografia de senhas
 
+### Tecnologias Utilizadas
+
+  - Node.js
+  - Express
+  - MongoDB
+  - JWT (JSON Web Token)
+  - Nodemailer (para envio de e-mails)
+
 ## 📁 Estrutura de Pastas
 
 ```

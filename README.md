@@ -24,6 +24,7 @@
 
 ## 📁 Estrutura de Pastas
 
+```
 ├── .expo
 ├── node_modules
 └── src
@@ -49,6 +50,7 @@
     └── route
         ├── books.js
         └── login.js
+```
 
 ### Pré-requisitos
 - Node.js (v18+)

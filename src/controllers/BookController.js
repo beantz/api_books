@@ -1,11 +1,12 @@
 import { validationResult } from "express-validator";
 
 
-class livrosController {
+class BookController {
 
     //essa rota passa pelo midleware verifyJWT, 'next' significa q se der certo ele passa pra proxima fase
     async index(req, res) {
-        //buscar no banco
+
+        //buscar no banco e retornar todos os livros cadastrados
 
         return res.json({message: "retornou todos os livros!"})
     }
@@ -25,7 +26,7 @@ class livrosController {
             });
         }
 
-        //mandar pro banco
+        //registrar no banco
         
         //dar um retorno
         return res.json({message: 'Livro cadastrado com sucesso'});
@@ -33,4 +34,4 @@ class livrosController {
 
 }
 
-export default new livrosController();
+export default new BookController();

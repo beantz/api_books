@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-class authController {
+class AuthController {
 
   async auth(req, res) {
 
@@ -31,7 +31,7 @@ class authController {
       });
     }
     
-    //verificar se dados enviados existem no banco
+    //verificar se email enviados existem no banco
     //iMPLEMENTAR LOGICA
     
     const id = 1; //esse id viria do banco de dados
@@ -93,7 +93,7 @@ class authController {
         contato
       });
 
-      const userName = req.body.name; // Extrai o nome do usuário
+      const userName = req.body.name;
 
       const token = await jwt.sign({ userName }, process.env.SECRET, {
         expiresIn: 300 // expires in 5min
@@ -111,7 +111,7 @@ class authController {
     }
   }
 
-  //envia codigo
+  //envia codigo no email
   async requestPasswordReset(req, res) {
     const { email } = req.body;
 
@@ -194,4 +194,4 @@ class authController {
 
 }
 
-export default new authController(); //retorna uma instancia da classe
+export default new AuthController(); //retorna uma instancia da classe

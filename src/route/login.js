@@ -1,5 +1,5 @@
 import express from 'express';
-import authController from '../controllers/authController.js';
+import authController from '../controllers/AuthController.js';
 import validateUser from '../request/validationLogin.js';
 import validateUserRegister  from '../request/validateUserRegister.js';
 import validateEmail from '../request/validateEmail.js'

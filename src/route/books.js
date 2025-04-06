@@ -1,12 +1,12 @@
-import livrosController from '../controllers/livrosController.js';
+import bookController from '../controllers/BookController.js';
 import { verifyJWT } from '../middleware/authJwt.js';
 import express from 'express';
 import validationBooks from '../request/validationBooks.js';
 
-const livrosRouter = express.Router();
+const booksRouter = express.Router();
 
-livrosRouter
-    .get('/livros', verifyJWT, (req, res) => livrosController.index(req, res))
-    .post('/livros/cadastrar' , verifyJWT ,validationBooks, (req, res) => livrosController.store(req, res))
+booksRouter
+    .get('/livros', verifyJWT, (req, res) => bookController.index(req, res))
+    .post('/livros/cadastrar' , verifyJWT ,validationBooks, (req, res) => bookController.store(req, res))
 
-export default livrosRouter;
+export default booksRouter;

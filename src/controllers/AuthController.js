@@ -4,6 +4,9 @@ import { body, validationResult } from 'express-validator';
 import speakeasy from 'speakeasy';
 import nodemailer from 'nodemailer';
 import User from '../models/User.js';
+import bcrypt from 'bcrypt';
+
+const saltRounds = 10; // Número de rounds para o salt
 
 // Configuração do transporter de e-mail (usando Gmail como exemplo)
 const transporter = nodemailer.createTransport({
@@ -22,11 +25,12 @@ class AuthController {
     const errors = validationResult(req);
 
     //Se houver erros, retorna uma resposta com os erros
-    if(!errors.isEmpty()) {
-      return res.status(400).json({ 
-        errors: errors.array().map(error => ({
-          path: error.param,
-          msg: error.msg
+    if (!errors.isEmpty()) {
+      //console.log('Erros de validação:', errors.array()); // Log dos erros
+      return res.status(400).json({
+        errors: errors.array().map(e => ({
+          field: e.param,
+          msg: e.msg
         }))
       });
     }
@@ -34,21 +38,17 @@ class AuthController {
     //verificar se email enviados existem no banco
     //iMPLEMENTAR LOGICA
     
-    const id = 1; //esse id viria do banco de dados
     try {
-      const token = await jwt.sign({ id }, process.env.SECRET, {
+      const user = { id: 1, email: 'teste@example.com' };
+      const token = await jwt.sign({ id: user.id }, process.env.SECRET, {
       expiresIn: 300 // expires in 5min
       });
 
-      // Adicionar token aos headers da resposta
-      // res.setHeader('Authorization', `Bearer ${token}`);
-
-      return res.json({ auth: true, token: token });
+      return res.json({ auth: true, token, user });
 
     } catch (error) {
 
-      console.error("Erro ao gerar token", error);
-      return res.status(500).json({message: "Erro interno no servidor"});
+      return res.status(500).json({ message: 'Erro ao gerar token' });
 
     }
         
@@ -74,26 +74,28 @@ class AuthController {
       });
     }
 
-    const { name, email, senha, contato } = req.body;
+    const { nome, email, senha, contato } = req.body;
 
     //verificar se ja não existe um usuario cadastrado no banco com o mesmo email
     try {
 
       const userExists = await User.findOne({ email });
       if (userExists) {
-          return res.status(400).json({ 
-              message: 'Já existe um usuário cadastrado com este email' 
-          });
+        return res.status(400).json({ 
+            message: 'Já existe um usuário cadastrado com este email' 
+        });
       } 
 
+      const hashedPassword = await bcrypt.hash(senha, saltRounds);
+
       const newUser = await User.create({
-        name,
+        nome,
         email,
-        senha, // Nota: Você deve hashear a senha antes de salvar!
+        senha: hashedPassword,
         contato
       });
 
-      const userName = req.body.name;
+      const userName = req.body.nome;
 
       const token = await jwt.sign({ userName }, process.env.SECRET, {
         expiresIn: 300 // expires in 5min
@@ -123,7 +125,7 @@ class AuthController {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // 1. Gerar código secreto temporário (válido por 10 minutos)
+    // gerar código secreto temporário (válido por 10 minutos)
     const secret = speakeasy.generateSecret({ length: 20 });
     const token = speakeasy.totp({
       secret: secret.base32,
@@ -131,11 +133,16 @@ class AuthController {
       step: 600 // 10 minutos
     });
 
-    //2. Salvar no banco (exemplo simplificado)
+    //salvar no banco
     await User.updateOne({ email }, { 
       resetPasswordToken: secret.base32,
-      resetPasswordExpires: Date.now() + 600000 // 10 minutos
+      resetPasswordExpires: Date.now() + 600000
     });
+
+    /* vai gerar uma secret, q vai ser algo aleatorio pra ser usado como base no token, 
+    ai vai ser criado um token TOTP (senha temporaria) com base nessa secret e com tempo de duração vai ser retornado um codigo numerico,
+     e em resetPasswordToken vai ser salvo a secret gerada para depois
+    realizar a verificação com o codigo gerado */
 
     // 3. Enviar e-mail com o código
     const mailOptions = {
@@ -158,38 +165,62 @@ class AuthController {
 
   //verifica codigo
   async verifyCode(req, res) {
-    const { token } = req.body;
+    const { token, email } = req.body;
 
-    //PAREI AQUI
-    // 2. Verificar o código (simulação)
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+    // Verificação de expiração
+    if (user.resetPasswordExpires < Date.now()) {
+      return res.status(400).json({ error: 'Código expirado' });
+    }
+
+    // Verificação com tolerância aumentada
     const isValid = speakeasy.totp.verify({
-      secret: User.resetPasswordToken, // secret.base32 salvo anteriormente
+      secret: user.resetPasswordToken,
       encoding: 'base32',
       token: token,
-      window: 1 // Permite 1 passo (10 minutos) de tolerância
+      step: 600, // Adicione esta linha
+      window: 1
     });
 
     if (!isValid) {
-      return res.status(400).json({ error: 'Código inválido ou expirado' });
+      return res.status(400).json({ 
+          error: 'Código inválido',
+          debug: {
+              serverTime: new Date().toISOString(),
+              expectedToken: expectedToken,
+              receivedToken: token
+          }
+      });
     }
 
-    res.status(200).json({ success: true, token: token});
+    // Limpa o token após uso
+    await User.updateOne({ email }, { 
+        resetPasswordToken: null,
+        resetPasswordExpires: null 
+    });
+
+    res.status(200).json({ success: true });
   }
 
   //altera a senha
   async verifyAndResetPassword(req, res) {
     const {token, novaSenha, email } = req.body;
 
-    // 1. Buscar usuário no banco
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
 
-    // 3. Atualizar senha (use bcrypt na prática!)
-    user.password = newPassword;
+    const hashedPassword = await bcrypt.hash(novaSenha, saltRounds);
+
+    user.password = hashedPassword;
     user.resetPasswordToken = undefined;
     await user.save();
 
+    console.log(user.password);
+
     res.status(200).json({ success: true, message: 'Senha redefinida com sucesso!' });
+
   }
 
 }

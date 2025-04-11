@@ -1,3 +1,5 @@
+process.env.TZ = 'UTC'; // Força UTC em todo o Node.js
+
 import 'dotenv-safe/config.js';
 import express, { Router } from 'express';
 import booksRouter from './src/route/books.js';
@@ -18,5 +20,6 @@ app.use(booksRouter);
 mongoose.connect(process.env.MONGODB_URI)
 .then(() => console.log("✅ Conectado ao MongoDB Atlas"))
 .catch(err => console.error("❌ Erro na conexão:", err));
+
  
 app.listen(3000, () => console.log("Servidor escutando na porta 3000..."));

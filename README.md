@@ -71,4 +71,4 @@
 git clone https://github.com/beantz/api_books.git
 cd api_books
 npm install
-npm start
+node Index

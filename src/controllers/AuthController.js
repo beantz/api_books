@@ -6,7 +6,7 @@ import nodemailer from 'nodemailer';
 import User from '../models/User.js';
 import bcrypt from 'bcrypt';
 
-const saltRounds = 10; // Número de rounds para o salt
+const saltRounds = 10; 
 
 // Configuração do transporter de e-mail (usando Gmail como exemplo)
 const transporter = nodemailer.createTransport({
@@ -26,7 +26,6 @@ class AuthController {
 
     //Se houver erros, retorna uma resposta com os erros
     if (!errors.isEmpty()) {
-      //console.log('Erros de validação:', errors.array()); // Log dos erros
       return res.status(400).json({
         errors: errors.array().map(e => ({
           field: e.param,
@@ -36,10 +35,21 @@ class AuthController {
     }
     
     //verificar se email enviados existem no banco
-    //iMPLEMENTAR LOGICA
+    const { email, password } = req.body;
+
+    const user = await User.findOne({email});
+    
+    if(!user) {
+      return res.status(404).json({ message: 'E-mail não encontrado' });
+    }
+
+    // Verificar se a senha está correta
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+        return res.status(401).json({ message: 'Senha incorreta' });
+    }
     
     try {
-      const user = { id: 1, email: 'teste@example.com' };
       const token = await jwt.sign({ id: user.id }, process.env.SECRET, {
       expiresIn: 300 // expires in 5min
       });
@@ -48,7 +58,7 @@ class AuthController {
 
     } catch (error) {
 
-      return res.status(500).json({ message: 'Erro ao gerar token' });
+      return res.status(500).json({ message: 'Erro ao fazer login' });
 
     }
         
@@ -101,9 +111,6 @@ class AuthController {
         expiresIn: 300 // expires in 5min
       });
 
-      // Adicionar token aos headers da resposta
-      //res.setHeader('Authorization', `Bearer ${token}`);
-
       return res.json({ message: 'Usuário cadastrado com sucesso!', auth: true, token: token });
 
     } catch(error) {
@@ -133,10 +140,10 @@ class AuthController {
       step: 600 // 10 minutos
     });
 
-    //salvar no banco
+    // //salvar no banco
     await User.updateOne({ email }, { 
       resetPasswordToken: secret.base32,
-      resetPasswordExpires: Date.now() + 600000
+      resetPasswordExpires: new Date(Date.now() + 600000)
     });
 
     /* vai gerar uma secret, q vai ser algo aleatorio pra ser usado como base no token, 
@@ -171,10 +178,16 @@ class AuthController {
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
 
     // Verificação de expiração
-    if (user.resetPasswordExpires < Date.now()) {
-      return res.status(400).json({ error: 'Código expirado' });
+    if (!user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now()) {
+      return res.status(400).json({ 
+        error: 'Código expirado',
+        debug: {
+          serverTime: new Date(),
+          expiration: user.resetPasswordExpires
+        }
+      });
     }
-
+  
     // Verificação com tolerância aumentada
     const isValid = speakeasy.totp.verify({
       secret: user.resetPasswordToken,
@@ -189,7 +202,7 @@ class AuthController {
           error: 'Código inválido',
           debug: {
               serverTime: new Date().toISOString(),
-              expectedToken: expectedToken,
+              //expectedToken: expectedToken,
               receivedToken: token
           }
       });
@@ -208,21 +221,38 @@ class AuthController {
   async verifyAndResetPassword(req, res) {
     const {token, novaSenha, email } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    const errors = validationResult(req);
 
-    const hashedPassword = await bcrypt.hash(novaSenha, saltRounds);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array().map(error => ({
+          field: error.param,      // Indica qual campo falhou (ex: 'novaSenha')
+          message: error.msg       // Mensagem de erro correspondente
+        }))
+      });
+    }
 
-    user.password = hashedPassword;
-    user.resetPasswordToken = undefined;
-    await user.save();
+    try {
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
 
-    console.log(user.password);
+      const hashedPassword = await bcrypt.hash(novaSenha, saltRounds);
 
-    res.status(200).json({ success: true, message: 'Senha redefinida com sucesso!' });
+      user.password = hashedPassword;
+      user.resetPasswordToken = undefined;
+      await user.save();
 
+      res.status(200).json({ success: true, message: 'Senha redefinida com sucesso!' });
+
+    } catch {
+  
+      return res.status(500).json({
+        success: false,
+        error: 'Erro interno no servidor'
+      });
+    }
   }
-
 }
 
 export default new AuthController(); //retorna uma instancia da classe

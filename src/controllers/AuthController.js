@@ -5,6 +5,7 @@ import speakeasy from 'speakeasy';
 import nodemailer from 'nodemailer';
 import User from '../models/User.js';
 import bcrypt from 'bcrypt';
+import redis from '../config/redis.js'
 
 const saltRounds = 10; 
 
@@ -64,10 +65,29 @@ class AuthController {
         
   }
 
-  logout(req, res) {
+  /*objetivo do logout: adiciona o token a uma lista negra (ex.: Redis 
+  com TTL de 5 min), limpa cookies relacionados. */
+  async logout(req, res) {
 
-    return res.json({auth: false, token: null, message: "Logout feito com sucesso!"});
+    try {
+      const token = req.headers.authorization?.split(' ')[1];
+     
+      if (!token) {
+        return res.status(400).json({ success: false, message: "token não fornecido" });
+      }  
 
+      // 1.Adiciona o token à lista negra no Redis (com tempo de expiração igual ao JWT)
+      await redis.set(`blacklist:${token}`, 'invalid', 'EX', 300); // Expira em 5 min
+
+      return res.status(200).json({ 
+        success: true,
+        message: "Logout realizado com sucesso" 
+      });
+      
+    } catch (error) {
+      console.error("Erro no logout:", error);
+      return res.status(500).json({ success: false });
+    }
   }
 
   async register(req,res) {
@@ -111,6 +131,7 @@ class AuthController {
         expiresIn: 300 // expires in 5min
       });
 
+      console.log(token);
       return res.json({ message: 'Usuário cadastrado com sucesso!', auth: true, token: token });
 
     } catch(error) {

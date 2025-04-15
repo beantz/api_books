@@ -1,8 +1,18 @@
 import jwt from 'jsonwebtoken';
+import redis from '../config/redis.js'
 
-export function verifyJWT(req, res, next) {
-  const token = req.headers['authorization']?.split(' ')[1]; // Remove "Bearer "
+export async function verifyJWT(req, res, next) {
+  if(req.path === '/logout') return next();
+
+  const token = req.headers['authorization']; //?.split(' ')[1]; // Remove "Bearer "
   
+  //verifica se token passado num ta na lista de tokens q foram feito o logout
+  const isBlacklisted = await redis.get(`blacklist:${token}`);
+  if (isBlacklisted) {
+    return res.status(401).json({ message: "Token inválido (logout realizado)" });
+
+  }
+
   if (!token) {
     return res.status(401).json({ 
       auth: false, 

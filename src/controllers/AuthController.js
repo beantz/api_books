@@ -5,7 +5,7 @@ import speakeasy from 'speakeasy';
 import nodemailer from 'nodemailer';
 import User from '../models/User.js';
 import bcrypt from 'bcrypt';
-import redis from '../config/redis.js'
+import redis from '../config/redis.js';
 
 const saltRounds = 10; 
 
@@ -98,8 +98,8 @@ class AuthController {
     if (!errors.isEmpty()) {
       return res.status(400).json({ 
         errors: errors.array().map(error => ({
-          path: error.param,
-          msg: error.msg
+          field: error.param,
+          message: error.msg
         }))
       });
     }
@@ -131,7 +131,6 @@ class AuthController {
         expiresIn: 300 // expires in 5min
       });
 
-      console.log(token);
       return res.json({ message: 'Usuário cadastrado com sucesso!', auth: true, token: token });
 
     } catch(error) {
@@ -260,14 +259,13 @@ class AuthController {
 
       const hashedPassword = await bcrypt.hash(novaSenha, saltRounds);
 
-      user.password = hashedPassword;
+      user.senha = hashedPassword;
       user.resetPasswordToken = undefined;
       await user.save();
 
       res.status(200).json({ success: true, message: 'Senha redefinida com sucesso!' });
-
+      
     } catch {
-  
       return res.status(500).json({
         success: false,
         error: 'Erro interno no servidor'

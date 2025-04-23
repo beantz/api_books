@@ -25,6 +25,7 @@ const BooksSchema = new mongoose.Schema({
     categoria_id: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
+        required: true,
     }],
     review: [{
         type: mongoose.Schema.Types.ObjectId,

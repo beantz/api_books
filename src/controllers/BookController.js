@@ -1,6 +1,7 @@
 import { validationResult } from "express-validator";
 import Book from '../models/Book.js';
-
+import Category from '../models/Categories.js';
+import Review from '../models/Review.js';
 
 class BookController {
 
@@ -8,9 +9,10 @@ class BookController {
     try {
       // Busca todos os livros, populando os dados relacionados
       const books = await Book.find()
-        .populate('user_id', 'name email') // Popula apenas nome e email do usuário
+        .populate('user_id', 'nome email') // Popula apenas nome e email do usuário
         .populate('categoria_id', 'nome')  // Popula apenas o nome da categoria
-        .populate('review')                // Popula todas as reviews
+        .populate({path: 'review',  // Campo a ser populado
+          options: { justOne: true }})                 // Popula todas as reviews
         .sort({ createdAt: -1 });          // Ordena do mais recente para o mais antigo
 
       // Formata a resposta para evitar vazamento de dados sensíveis
@@ -23,7 +25,7 @@ class BookController {
         descricao: book.descricao,
         vendedor: {
           id: book.user_id?._id,
-          nome: book.user_id?.name,
+          nome: book.user_id?.nome,
           email: book.user_id?.email
         },
         categorias: book.categoria_id?.map(cat => ({
@@ -49,39 +51,75 @@ class BookController {
     }
   }
 
+  //esse metodo aqui ta dando errado
   async store(req, res) {
 
-    //fazer validação
+    //Validação
     const errors = validationResult(req);
-
     if (!errors.isEmpty()) {
       return res.status(400).json({
-        success: false,
-        errors: errors.array().map(e => ({
-          field: e.param,
-          message: e.msg
-        }))
+          success: false,
+          errors: errors.array()
       });
     }
 
-    //registrar no banco
-    const { titulo, autor, preco, estado, descricao, user_id, categoria_id } = req.body;
+    //categoria_id vai ta recebendo o nome
+    const { titulo, autor, preco, estado, descricao, categoria_id } = req.body;
 
+    console.log('req', categoria_id);
     try {
+
+      // busca no banco com comparação direta
+      const nomeCategoria = await Category.findOne({ nome: categoria_id });
+      console.log(nomeCategoria);
+      let todasCategorias = await Category.find({});
+
+      if (!nomeCategoria) {
+        return res.status(400).json({
+          success: false,
+          message: `Categoria de nome: "${nomeCategoria}" não encontrada.`,
+          categorias_disponiveis: todasCategorias.map(c => c.nome)
+        });
+      }
+
+      // cria o livro com o ID da categoria
       const newBook = await Book.create({
         titulo,
         autor,
-        preco,
+        preco: parseFloat(preco),
         estado,
         descricao,
-        user_id, // ID do usuário/vendedor
-        categoria_id // Array de IDs de categorias
-    });
+        user_id: req.userId,
+        categoria_id: nomeCategoria._id // Usa o ID real
+      });
+
+      // atualiza a categoria com o novo livro (opcional)
+      await Category.findByIdAndUpdate(
+        nomeCategoria,
+        { $push: { livros_id: newBook._id } }
+      );
+
+      /* retorna o livro populado (o populate é usado para que quando for dar um retorno da consulta acima, em user_id e categoria_id não seja me retornado apenas od ids que ´e o seria normalmente
+      ao inves disso, relacionado ao user_ id e categoria_id vai ser retornado o id com os campos mostrados ai) */
+      const populatedBook = await Book.findById(newBook._id)
+        .populate('user_id', 'nome email')
+        .populate('categoria_id', 'nome');
 
       return res.status(201).json({
         success: true,
         message: "Livro cadastrado com sucesso!",
-        book: newBook
+        book: {
+          id: populatedBook._id,
+          titulo: populatedBook.titulo,
+          vendedor: {
+            id: populatedBook.user_id?._id,
+            nome: populatedBook.user_id?.nome
+          },
+          categoria: { // ✅ Retorna um objeto (não mais array)
+            id: populatedBook.categoria_id?._id,
+            nome: populatedBook.categoria_id?.nome
+          }
+        }
       });
 
     } catch (error) {
@@ -94,6 +132,6 @@ class BookController {
     }
 }
 
-}
+};
 
 export default new BookController();

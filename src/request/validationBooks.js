@@ -21,7 +21,7 @@ const validationBooks = [
     .isIn(['Novo', 'Usado - Bom', 'Usado - Regular', 'Usado - Ruim'])
     .withMessage('Estado do livro inválido'),
     
-  body('categoria')
+  body('categoria_id')
     .notEmpty().withMessage('A categoria deve ser selecionada')
     .bail()
     .isIn([

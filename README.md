@@ -1,5 +1,5 @@
 # 📚 Labersaler API
-é uma API para compartilhamento de livros, permitindo que usuários cadastrem-se, publiquem livros para venda ou doação, e avaliem obras. A API inclui autenticação segura e sistema de recuperação de senha via e-mail.
+  é uma API para compartilhamento de livros, permitindo que usuários cadastrem-se, publiquem livros para venda ou doação, e avaliem obras. A API inclui autenticação segura e sistema de recuperação de senha via e-mail.
 
 ## 🌟 Funcionalidades Principais
 

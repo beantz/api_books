@@ -247,8 +247,9 @@ class AuthController {
       return res.status(400).json({
         success: false,
         errors: errors.array().map(error => ({
-          field: error.param,      // Indica qual campo falhou (ex: 'novaSenha')
-          message: error.msg       // Mensagem de erro correspondente
+          field: error.param || 'form',     
+          message: error.msg,
+          path: error.location             
         }))
       });
     }

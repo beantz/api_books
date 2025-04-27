@@ -24,6 +24,5 @@ app.use(usersRouter);
 mongoose.connect(process.env.MONGODB_URI)
 .then(() => console.log("✅ Conectado ao MongoDB Atlas"))
 .catch(err => console.error("❌ Erro na conexão:", err));
-
  
 app.listen(3000, () => console.log("Servidor escutando na porta 3000..."));

@@ -9,6 +9,11 @@ import usersRouter from './src/route/users.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -19,6 +24,10 @@ app.use(loginRouter);
 app.use(booksRouter);
 app.use(categoryRouter);
 app.use(usersRouter);
+app.use(express.urlencoded({ extended: true }));
+
+// Serve arquivos estáticos da pasta uploads
+app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
 
 // Conexão com o MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI)

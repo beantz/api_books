@@ -17,6 +17,11 @@ const BooksSchema = new mongoose.Schema({
     descricao: {
         type: String
     },
+    //ALTEREI AQUI
+    imagem: {
+        url: { type: String, required: false },
+        filename: { type: String, required: false }
+      },
     user_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

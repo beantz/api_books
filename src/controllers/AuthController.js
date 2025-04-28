@@ -213,7 +213,7 @@ class AuthController {
       secret: user.resetPasswordToken,
       encoding: 'base32',
       token: token,
-      step: 600, // Adicione esta linha
+      step: 600, 
       window: 1
     });
 

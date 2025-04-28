@@ -2,6 +2,8 @@ import { validationResult } from "express-validator";
 import Book from '../models/Book.js';
 import Category from '../models/Categories.js';
 import Review from '../models/Review.js';
+import multer from 'multer';
+import crypto from 'crypto';
 
 class BookController {
 
@@ -23,6 +25,10 @@ class BookController {
         preco: book.preco,
         estado: book.estado,
         descricao: book.descricao,
+        imagem: {
+          url: book.imagem?.url,
+          filename: book.imagem?.filename
+        },
         vendedor: {
           id: book.user_id?._id,
           nome: book.user_id?.nome,
@@ -51,38 +57,45 @@ class BookController {
     }
   }
 
-  //esse metodo aqui ta dando errado
   async store(req, res) {
-
-    //Validação
+    // Validação
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
-          success: false,
-          errors: errors.array()
+        success: false,
+        errors: errors.array()
       });
     }
-
-    //categoria_id vai ta recebendo o nome
+  
     const { titulo, autor, preco, estado, descricao, categoria_id } = req.body;
-
-    console.log('req', categoria_id);
+    const imagem = req.file; // Arquivo recebido pelo multer
+  
     try {
-
-      // busca no banco com comparação direta
+      // Busca a categoria
       const nomeCategoria = await Category.findOne({ nome: categoria_id });
-      console.log(nomeCategoria);
-      let todasCategorias = await Category.find({});
-
+      const todasCategorias = await Category.find({});
+  
       if (!nomeCategoria) {
         return res.status(400).json({
           success: false,
-          message: `Categoria de nome: "${nomeCategoria}" não encontrada.`,
+          message: `Categoria de nome: "${categoria_id}" não encontrada.`,
           categorias_disponiveis: todasCategorias.map(c => c.nome)
         });
       }
+  
+      // URL de acesso à imagem
+      const baseUrl = process.env.BASE_URL || 'http://192.168.0.105:3000';
+      //const imageUrl = imagem ? `${baseUrl}/uploads/${imagem.filename}` : null;
+      const imageUrl = imagem ? `${baseUrl}/uploads/${imagem.filename}`.replace(/\\/g, '/') : null;
+  
+      if (!imagem) {
+        return res.status(400).json({
+          success: false,
+          message: "A imagem é obrigatória"
+        });
+      }      
 
-      // cria o livro com o ID da categoria
+      // Cria o livro com os dados e a imagem
       const newBook = await Book.create({
         titulo,
         autor,
@@ -90,38 +103,42 @@ class BookController {
         estado,
         descricao,
         user_id: req.userId,
-        categoria_id: nomeCategoria._id // Usa o ID real
+        categoria_id: nomeCategoria._id,
+        imagem: {
+          url: imageUrl,
+          filename: imagem.filename
+        }
       });
-
-      // atualiza a categoria com o novo livro (opcional)
+  
+      // Atualiza a categoria com o novo livro
       await Category.findByIdAndUpdate(
-        nomeCategoria,
+        nomeCategoria._id,
         { $push: { livros_id: newBook._id } }
       );
-
-      /* retorna o livro populado (o populate é usado para que quando for dar um retorno da consulta acima, em user_id e categoria_id não seja me retornado apenas od ids que ´e o seria normalmente
-      ao inves disso, relacionado ao user_ id e categoria_id vai ser retornado o id com os campos mostrados ai) */
+  
+      // Popula os dados para retorno
       const populatedBook = await Book.findById(newBook._id)
         .populate('user_id', 'nome email')
         .populate('categoria_id', 'nome');
-
+  
       return res.status(201).json({
         success: true,
         message: "Livro cadastrado com sucesso!",
         book: {
           id: populatedBook._id,
           titulo: populatedBook.titulo,
+          imagem: populatedBook.imagem?.url,
           vendedor: {
             id: populatedBook.user_id?._id,
             nome: populatedBook.user_id?.nome
           },
-          categoria: { // ✅ Retorna um objeto (não mais array)
+          categoria: {
             id: populatedBook.categoria_id?._id,
             nome: populatedBook.categoria_id?.nome
           }
         }
       });
-
+  
     } catch (error) {
       console.error("Erro ao cadastrar livro:", error);
       return res.status(500).json({
@@ -130,8 +147,7 @@ class BookController {
         error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
-}
-
+  }
 };
 
 export default new BookController();

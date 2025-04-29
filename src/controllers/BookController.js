@@ -2,22 +2,19 @@ import { validationResult } from "express-validator";
 import Book from '../models/Book.js';
 import Category from '../models/Categories.js';
 import Review from '../models/Review.js';
-import multer from 'multer';
-import crypto from 'crypto';
 
 class BookController {
 
   async index(req, res) {
     try {
-      // Busca todos os livros, populando os dados relacionados
       const books = await Book.find()
-        .populate('user_id', 'nome email') // Popula apenas nome e email do usuário
-        .populate('categoria_id', 'nome')  // Popula apenas o nome da categoria
+        .populate('user_id', 'nome email') 
+        .populate('categoria_id', 'nome')  
         .populate({path: 'review', 
-          options: { justOne: true }})                 // Popula todas as reviews
-        .sort({ createdAt: -1 });          // Ordena do mais recente para o mais antigo
+          options: { justOne: true }})                
+        .sort({ createdAt: -1 });        
 
-      // Formata a resposta para evitar vazamento de dados sensíveis
+      //formata a resposta para evitar vazamento de dados sensíveis
       const formattedBooks = books.map(book => ({
         id: book._id,
         titulo: book.titulo,
@@ -58,7 +55,6 @@ class BookController {
   }
 
   async store(req, res) {
-    // Validação
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -68,10 +64,9 @@ class BookController {
     }
   
     const { titulo, autor, preco, estado, descricao, categoria_id } = req.body;
-    const imagem = req.file; // Arquivo recebido pelo multer
+    const imagem = req.file; //arquivo recebido pelo multer
   
     try {
-      // Busca a categoria
       const nomeCategoria = await Category.findOne({ nome: categoria_id });
       const todasCategorias = await Category.find({});
   
@@ -83,9 +78,7 @@ class BookController {
         });
       }
   
-      // URL de acesso à imagem
       const baseUrl = process.env.BASE_URL || 'http://192.168.0.105:3000';
-      //const imageUrl = imagem ? `${baseUrl}/uploads/${imagem.filename}` : null;
       const imageUrl = imagem ? `${baseUrl}/uploads/${imagem.filename}`.replace(/\\/g, '/') : null;
   
       if (!imagem) {
@@ -95,7 +88,6 @@ class BookController {
         });
       }      
 
-      // Cria o livro com os dados e a imagem
       const newBook = await Book.create({
         titulo,
         autor,
@@ -110,13 +102,11 @@ class BookController {
         }
       });
   
-      // Atualiza a categoria com o novo livro
       await Category.findByIdAndUpdate(
         nomeCategoria._id,
         { $push: { livros_id: newBook._id } }
       );
   
-      // Popula os dados para retorno
       const populatedBook = await Book.findById(newBook._id)
         .populate('user_id', 'nome email')
         .populate('categoria_id', 'nome');
@@ -151,12 +141,12 @@ class BookController {
 
   async delete(req, res) {
     const { id } = req.params;
-    const userId = req.userId; // ID do usuário logado
+    const userId = req.userId; 
 
     console.log(req.userId);
   
     try {
-      // 1. Encontra o livro e verifica se existe
+     
       const book = await Book.findById(id);
       
       if (!book) {
@@ -166,7 +156,6 @@ class BookController {
         });
       }
   
-      // 2. Verifica se o usuário é o dono do livro
       if (book.user_id.toString() !== userId) {
         return res.status(403).json({
           success: false,
@@ -174,16 +163,16 @@ class BookController {
         });
       }
   
-      // 3. Remove o livro da categoria associada
+      // remove o livro da categoria associada
       await Category.findByIdAndUpdate(
         book.categoria_id,
         { $pull: { livros_id: book._id } }
       );
   
-      // 4. Remove todas as reviews associadas ao livro
+      // remove todas as reviews associadas ao livro
       await Review.deleteMany({ livro_id: book._id });
   
-      // 5. Deleta o livro
+      // deleta o livro
       await Book.findByIdAndDelete(id);
   
       return res.status(200).json({

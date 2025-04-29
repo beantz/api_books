@@ -2,7 +2,7 @@ import bookController from '../controllers/BookController.js';
 import { verifyJWT } from '../middleware/authJwt.js';
 import express from 'express';
 import validationBooks from '../request/validationBooks.js';
-import upload from '../uploads/config.js';
+import upload from '../uploads/config.js'; //arquivo de configuração da imagem
 
 const booksRouter = express.Router();
 

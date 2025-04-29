@@ -13,7 +13,7 @@ class BookController {
       const books = await Book.find()
         .populate('user_id', 'nome email') // Popula apenas nome e email do usuário
         .populate('categoria_id', 'nome')  // Popula apenas o nome da categoria
-        .populate({path: 'review',  // Campo a ser populado
+        .populate({path: 'review', 
           options: { justOne: true }})                 // Popula todas as reviews
         .sort({ createdAt: -1 });          // Ordena do mais recente para o mais antigo
 
@@ -141,6 +141,58 @@ class BookController {
   
     } catch (error) {
       console.error("Erro ao cadastrar livro:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Erro interno no servidor",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
+
+  async delete(req, res) {
+    const { id } = req.params;
+    const userId = req.userId; // ID do usuário logado
+
+    console.log(req.userId);
+  
+    try {
+      // 1. Encontra o livro e verifica se existe
+      const book = await Book.findById(id);
+      
+      if (!book) {
+        return res.status(404).json({
+          success: false,
+          message: "Livro não encontrado"
+        });
+      }
+  
+      // 2. Verifica se o usuário é o dono do livro
+      if (book.user_id.toString() !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: "Você não tem permissão para deletar este livro"
+        });
+      }
+  
+      // 3. Remove o livro da categoria associada
+      await Category.findByIdAndUpdate(
+        book.categoria_id,
+        { $pull: { livros_id: book._id } }
+      );
+  
+      // 4. Remove todas as reviews associadas ao livro
+      await Review.deleteMany({ livro_id: book._id });
+  
+      // 5. Deleta o livro
+      await Book.findByIdAndDelete(id);
+  
+      return res.status(200).json({
+        success: true,
+        message: "Livro deletado com sucesso"
+      });
+  
+    } catch (error) {
+      console.error("Erro ao deletar livro:", error);
       return res.status(500).json({
         success: false,
         message: "Erro interno no servidor",

@@ -11,6 +11,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import reviewRouter from './src/route/review.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +25,7 @@ app.use(loginRouter);
 app.use(booksRouter);
 app.use(categoryRouter);
 app.use(usersRouter);
+app.use(reviewRouter);
 app.use(express.urlencoded({ extended: true }));
 
 // Serve arquivos estáticos da pasta uploads

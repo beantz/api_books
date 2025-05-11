@@ -2,6 +2,14 @@ import { validationResult } from "express-validator";
 import Book from '../models/Book.js';
 import Category from '../models/Categories.js';
 import Review from '../models/Review.js';
+import getLocalIp from '../config/ip.js';
+import dotenv from 'dotenv';
+
+dotenv.config;
+
+const ip_local = getLocalIp();
+
+process.env.BASE_URL = ip_local;
 
 class BookController {
 
@@ -77,8 +85,8 @@ class BookController {
           categorias_disponiveis: todasCategorias.map(c => c.nome)
         });
       }
-  
-      const baseUrl = process.env.BASE_URL || 'http://192.168.0.105:3000';
+      
+      const baseUrl = process.env.BASE_URL || 'http://192.168.1.8:3000';
       const imageUrl = imagem ? `${baseUrl}/uploads/${imagem.filename}`.replace(/\\/g, '/') : null;
   
       if (!imagem) {

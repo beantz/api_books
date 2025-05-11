@@ -31,6 +31,8 @@ export async function verifyJWT(req, res, next) {
       });
     }
     
+    //req.userId = decoded.id;
+    req.user = { _id: decoded.id }; 
     req.userId = decoded.id;
     next();
   });

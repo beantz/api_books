@@ -51,8 +51,9 @@ class AuthController {
     }
     
     try {
+      
       const token = await jwt.sign({ id: user.id }, process.env.SECRET, {
-      expiresIn: 300 // expires in 5min
+      expiresIn: 1200 // expires in 20min
       });
 
       return res.json({ auth: true, token, user });

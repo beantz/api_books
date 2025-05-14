@@ -17,7 +17,6 @@ const BooksSchema = new mongoose.Schema({
     descricao: {
         type: String
     },
-    
     imagem: {
         url: { type: String, required: false },
         filename: { type: String, required: false }

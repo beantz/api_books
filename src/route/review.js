@@ -7,5 +7,6 @@ const reviewRouter = express.Router();
 reviewRouter
     .get('/Review/:livro_id' , (req, res) => reviewController.getAllReviewsBook(req, res))
     .post('/Review', verifyJWT ,(req, res) => reviewController.store(req, res))
+    .delete('/Review/DeletarComentario/:id', verifyJWT, (req, res) => reviewController.deleteReview(req, res))
 
 export default reviewRouter;

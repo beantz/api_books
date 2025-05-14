@@ -2,14 +2,6 @@ import { validationResult } from "express-validator";
 import Book from '../models/Book.js';
 import Category from '../models/Categories.js';
 import Review from '../models/Review.js';
-import getLocalIp from '../config/ip.js';
-import dotenv from 'dotenv';
-
-dotenv.config;
-
-const ip_local = getLocalIp();
-
-process.env.BASE_URL = ip_local;
 
 class BookController {
 
@@ -86,7 +78,8 @@ class BookController {
         });
       }
       
-      const baseUrl = process.env.BASE_URL || 'http://192.168.1.8:3000';
+      const baseUrl = process.env.BASE_URL || 'http://192.168.0.105:3000';
+      
       const imageUrl = imagem ? `${baseUrl}/uploads/${imagem.filename}`.replace(/\\/g, '/') : null;
   
       if (!imagem) {
@@ -190,6 +183,46 @@ class BookController {
   
     } catch (error) {
       console.error("Erro ao deletar livro:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Erro interno no servidor",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
+
+  async findByIdUser(req, res) {
+    const { id_usuario } = req.params;
+  
+    try {
+      const books = await Book.find({ user_id: id_usuario })
+        .populate('categoria_id', 'nome')        
+
+      //formata a resposta para evitar vazamento de dados sensíveis
+      const formattedBooks = books.map(book => ({
+        id: book._id,
+        titulo: book.titulo,
+        autor: book.autor,
+        preco: book.preco,
+        estado: book.estado,
+        descricao: book.descricao,
+        imagem: {
+          url: book.imagem?.url,
+          filename: book.imagem?.filename
+        },
+        categorias: book.categoria_id?.map(cat => ({
+          id: cat._id,
+          nome: cat.nome
+        })),
+      }));
+
+      return res.status(200).json({
+        success: true,
+        books: formattedBooks
+      });
+
+    } catch (error) {
+      console.error("Erro ao buscar livros:", error);
       return res.status(500).json({
         success: false,
         message: "Erro interno no servidor",

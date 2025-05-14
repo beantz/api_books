@@ -56,7 +56,7 @@ class ReviewController {
   //ver esse metodo que retorna todas as reviews de um determinado livro
   async getAllReviewsBook(req, res) {
     const { livro_id } = req.params;
-    
+    console.log('entrou no controller');
     try {
       if (!mongoose.Types.ObjectId.isValid(livro_id)) {
         return res.status(400).json({ // Alterado para usar res.status().json()
@@ -100,7 +100,51 @@ class ReviewController {
         message: 'Erro interno no servidor'
       });
     }
-}
+  }
+
+  async deleteReview(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.userId; //obtido do middleware de autenticação
+  
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID da avaliação inválido'
+        });
+      }
+  
+      const review = await Review.findById(id);
+      
+      if (!review) {
+        return res.status(404).json({
+          success: false,
+          message: 'Avaliação não encontrada'
+        });
+      }
+  
+      if (review.user_id.toString() !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Você não tem permissão para excluir esta avaliação'
+        });
+      }
+  
+      await Review.findByIdAndDelete(id);
+  
+      return res.status(200).json({
+        success: true,
+        message: 'Avaliação excluída com sucesso'
+      });
+  
+    } catch (error) {
+      console.error('Erro ao excluir avaliação:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro interno no servidor'
+      });
+    }
+  }
 
 }
 

@@ -53,13 +53,12 @@ class ReviewController {
     }
   }
 
-  //ver esse metodo que retorna todas as reviews de um determinado livro
   async getAllReviewsBook(req, res) {
     const { livro_id } = req.params;
     console.log('entrou no controller');
     try {
       if (!mongoose.Types.ObjectId.isValid(livro_id)) {
-        return res.status(400).json({ // Alterado para usar res.status().json()
+        return res.status(400).json({ 
           success: false,
           message: 'ID do livro inválido'
         });
@@ -83,7 +82,6 @@ class ReviewController {
 
       console.log('reviws', book.review);
 
-      // Modifique o retorno para enviar como resposta HTTP
       return res.status(200).json(
         book.review.map(review => ({
           _id: review._id,

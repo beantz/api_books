@@ -29,19 +29,17 @@ class UserController {
             const { userId } = req.params;
             const { nome, email, contato } = req.body;
 
-            // Verifica se o usuário existe
             const userExists = await User.findById(userId);
             if (!userExists) {
                 return res.status(404).json({ message: "Usuário não encontrado" });
             }
 
-            // Atualiza apenas os campos permitidos
             const updatedUser = await User.findByIdAndUpdate(
                 userId,
                 { nome, email, contato },
                 { 
-                    new: true,          // Retorna o documento atualizado
-                    runValidators: true // Executa as validações do schema
+                    new: true,          
+                    runValidators: true
                 }
             ).select('-senha -resetPasswordToken -resetPasswordExpires -__v');
 
@@ -54,7 +52,6 @@ class UserController {
         } catch (error) {
             console.error("Erro ao atualizar usuário:", error);
             
-            // Tratamento especial para erro de email único
             if (error.code === 11000 && error.keyPattern.email) {
                 return res.status(400).json({ 
                     success: false,

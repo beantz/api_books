@@ -14,7 +14,6 @@ const validationBooks = [
     .trim()
     .isLength({ max: 500 }).withMessage('A descrição não pode exceder 500 caracteres'),
     
-  // Validação para selects (dropdowns)
   body('estado')
     .notEmpty().withMessage('O estado do livro deve ser selecionado')
     .bail()
@@ -32,7 +31,8 @@ const validationBooks = [
       'Histórico',
       'Autobiografias e Biografias',
       'Autoajuda',
-      'Literatura Infantil'
+      'Literatura Infantil',
+      'Fotografico'
     ]).withMessage('Categoria inválida')
 ];
 

@@ -7,11 +7,10 @@ class CategoryController {
     try {
       // Busca apenas os dados básicos das categorias
       const categorias = await Category.find({})
-        .select('_id nome createdAt updatedAt') // Seleciona apenas estes campos
-        .sort({ nome: 1 }) // Ordena por nome (A-Z)
-        .lean(); // Converte para objeto JavaScript puro
+        .select('_id nome createdAt updatedAt') 
+        .sort({ nome: 1 }) 
+        .lean(); 
   
-      // Formata a resposta
       const response = categorias.map(categoria => ({
         id: categoria._id,
         nome: categoria.nome,
@@ -36,7 +35,6 @@ class CategoryController {
   }
   
   async store(req, res) {
-    // Validação dos dados
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -51,7 +49,7 @@ class CategoryController {
     const { nome } = req.body;
   
     try {
-      // Verifica se a categoria já existe
+      
       const categoriaExistente = await Category.findOne({ nome });
       if (categoriaExistente) {
         return res.status(409).json({
@@ -60,10 +58,9 @@ class CategoryController {
         });
       }
   
-      // Cria a nova categoria
       const newCategory = await Category.create({
         nome,
-        livros_id: [] // Inicializa vazio (será preenchido quando livros forem associados)
+        livros_id: [] 
       });
   
       return res.status(201).json({

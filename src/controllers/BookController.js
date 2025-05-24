@@ -64,7 +64,7 @@ class BookController {
     }
   
     const { titulo, autor, preco, estado, descricao, categoria_id } = req.body;
-    const imagem = req.file; //arquivo recebido pelo multer
+    const imagem = req.file;
   
     try {
       const nomeCategoria = await Category.findOne({ nome: categoria_id });
@@ -78,7 +78,7 @@ class BookController {
         });
       }
       
-      const baseUrl = process.env.BASE_URL || 'http://192.168.0.105:3000';
+      const baseUrl = 'http://localhost:3000'; //process.env.BASE_URL || 'http://192.168.0.105:3000';
       
       const imageUrl = imagem ? `${baseUrl}/uploads/${imagem.filename}`.replace(/\\/g, '/') : null;
   
@@ -164,13 +164,11 @@ class BookController {
         });
       }
   
-      // remove o livro da categoria associada
       await Category.findByIdAndUpdate(
         book.categoria_id,
         { $pull: { livros_id: book._id } }
       );
   
-      // remove todas as reviews associadas ao livro
       await Review.deleteMany({ livro_id: book._id });
   
       // deleta o livro
@@ -230,6 +228,59 @@ class BookController {
       });
     }
   }
-};
+
+  async getBookById(req, res) {
+    try {
+      const { id } = req.params;
+
+      const livro = await Book.findById(id)
+        .populate({
+          path: 'user_id',
+          select: 'nome contato'
+        })
+        .populate({
+          path: 'categoria_id',
+          select: 'nome'
+        });
+
+      if (!livro) {
+        return res.status(404).json({
+          success: false,
+          message: 'Livro não encontrado'
+        });
+      }
+
+      const response = {
+        success: true,
+        livro: {
+          id: livro._id,
+          titulo: livro.titulo,
+          autor: livro.autor,
+          preco: livro.preco,
+          estado: livro.estado,
+          descricao: livro.descricao,
+          imagem: livro.imagem,
+          categorias: livro.categoria_id.map(cat => cat.nome),
+          vendedor: {
+            id: livro.user_id._id, 
+            nome: livro.user_id.nome,
+            contato: livro.user_id.contato
+          },
+          createdAt: livro.createdAt
+        }
+      };
+
+      res.json(response);
+
+    } catch (error) {
+      console.error('Erro ao buscar livro:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar livro',
+        error: error.message
+      });
+    }
+  }
+}
 
 export default new BookController();

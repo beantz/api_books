@@ -8,7 +8,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Exportação nomeada (recomendado para ESM)
 export const enviarEmail = async ({ to, subject, html, text }) => {
   await transporter.sendMail({ 
     from: '"App Name" <seuemail@gmail.com>', 

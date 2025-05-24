@@ -9,7 +9,6 @@ import redis from '../config/redis.js';
 
 const saltRounds = 10; 
 
-// Configuração do transporter de e-mail (usando Gmail como exemplo)
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -22,10 +21,8 @@ class AuthController {
 
   async auth(req, res) {
 
-    // Verifica os erros de validação
     const errors = validationResult(req);
 
-    //Se houver erros, retorna uma resposta com os erros
     if (!errors.isEmpty()) {
       return res.status(400).json({
         errors: errors.array().map(e => ({
@@ -44,7 +41,6 @@ class AuthController {
       return res.status(404).json({ message: 'E-mail não encontrado' });
     }
 
-    // Verificar se a senha está correta
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
         return res.status(401).json({ message: 'Senha incorreta' });
@@ -53,7 +49,7 @@ class AuthController {
     try {
       
       const token = await jwt.sign({ id: user.id }, process.env.SECRET, {
-      expiresIn: 1200 // expires in 20min
+      expiresIn: 1200 
       });
 
       return res.json({ auth: true, token, user });
@@ -77,8 +73,7 @@ class AuthController {
         return res.status(400).json({ success: false, message: "token não fornecido" });
       }  
 
-      // 1.Adiciona o token à lista negra no Redis (com tempo de expiração igual ao JWT)
-      await redis.set(`blacklist:${token}`, 'invalid', 'EX', 300); // Expira em 5 min
+      await redis.set(`blacklist:${token}`, 'invalid', 'EX', 300); 
 
       return res.status(200).json({ 
         success: true,
@@ -93,7 +88,6 @@ class AuthController {
 
   async register(req,res) {
 
-    // Verifica os erros de validação
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -145,10 +139,8 @@ class AuthController {
   async requestPasswordReset(req, res) {
     const { email } = req.body;
 
-    // Verifica os erros de validação
     const errors = validationResult(req);
 
-    // Se houver erros, retorna uma resposta com os erros
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
@@ -161,7 +153,6 @@ class AuthController {
       step: 600 // 10 minutos
     });
 
-    // //salvar no banco
     await User.updateOne({ email }, { 
       resetPasswordToken: secret.base32,
       resetPasswordExpires: new Date(Date.now() + 600000)
@@ -172,7 +163,6 @@ class AuthController {
      e em resetPasswordToken vai ser salvo a secret gerada para depois
     realizar a verificação com o codigo gerado */
 
-    // 3. Enviar e-mail com o código
     const mailOptions = {
       from: 'trizmours2002@gmail.com',
       to: email,
@@ -198,7 +188,6 @@ class AuthController {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
 
-    // Verificação de expiração
     if (!user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now()) {
       return res.status(400).json({ 
         error: 'Código expirado',
@@ -209,7 +198,6 @@ class AuthController {
       });
     }
   
-    // Verificação com tolerância aumentada
     const isValid = speakeasy.totp.verify({
       secret: user.resetPasswordToken,
       encoding: 'base32',
@@ -229,7 +217,6 @@ class AuthController {
       });
     }
 
-    // Limpa o token após uso
     await User.updateOne({ email }, { 
         resetPasswordToken: null,
         resetPasswordExpires: null 

@@ -78,7 +78,7 @@ class BookController {
         });
       }
       
-      const baseUrl = 'http://localhost:3000'; //process.env.BASE_URL || 'http://192.168.0.105:3000';
+      const baseUrl = process.env.BASE_URL || 'http://192.168.0.105:3000';
       
       const imageUrl = imagem ? `${baseUrl}/uploads/${imagem.filename}`.replace(/\\/g, '/') : null;
   

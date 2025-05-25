@@ -2,6 +2,27 @@ import { validationResult } from "express-validator";
 import User from '../models/User.js';
 
 class UserController {
+    async allUsers(req, res) {
+        try {
+            const users = await User.find()
+                .select('-senha -resetPasswordToken -resetPasswordExpires -__v')
+                .lean();
+
+            return res.json({
+                success: true,
+                count: users.length,
+                data: users
+            });
+
+        } catch (error) {
+            console.error("Erro ao buscar todos os usuários:", error);
+            return res.status(500).json({ 
+                success: false,
+                message: "Erro interno no servidor ao listar usuários" 
+            });
+        }
+    }
+
     async getUserById(req, res) {
         try {
             const user = await User.findById(req.params.userId)

@@ -28,35 +28,52 @@
   - MongoDB
   - JWT (JSON Web Token)
   - Nodemailer (para envio de e-mails)
+  - Docker 
 
 ## 📁 Estrutura de Pastas
 
 ```
-├── .expo
-├── node_modules
-└── src
+├── api_node
+  ├── node_modules
+  └── src
     ├── config
-    │   └── dbconfig.js
+    │   ├── dbconfig.js
+    │   ├── multerConfig.js
+    │   └── redis.js
     ├── controllers
-    │   ├── authController.js
-    │   └── livrosController.js
+    │   ├── AuthController.js
+    │   ├── BookController.js
+    │   ├── CategoryController.js
+    │   ├── ReviewController.js
+    │   └── UserController.js
     ├── email
-    │   └── enviarEmail.js
+    │   └── enviaFEmail.js
     ├── middleware
     │   └── authJwt.js
     ├── models
     │   ├── Book.js
-    │   ├── Category.js
+    │   ├── Categories.js
     │   ├── Review.js
     │   └── User.js
     ├── request
     │   ├── validateEmail.js
+    │   ├── validatePassword.js
     │   ├── validateUserRegister.js
     │   ├── validationBooks.js
+    │   ├── validationCategory.js
     │   └── validationLogin.js
     └── route
         ├── books.js
-        └── login.js
+        ├── category.js
+        ├── login.js
+        ├── review.js
+        └── users.js
+  ├── uploads
+  ├── .env
+  ├── .env.example
+  ├── .gitignore
+  ├── Dockerfile
+  └── Index.js
 ```
 
 ### Pré-requisitos

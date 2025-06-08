@@ -19,14 +19,14 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 const app = express();
-app.use(cors()); 
-app.use(express.json()); //é um middleware que analisa o corpo das requisições HTTP com o tipo de conteúdo application/json.
+app.use(cors({exposedHeaders: ['Content-Disposition']})); 
+app.use(express.json({ limit: '50mb' })); //é um middleware que analisa o corpo das requisições HTTP com o tipo de conteúdo application/json.
 app.use(loginRouter);
 app.use(booksRouter);
 app.use(categoryRouter);
 app.use(usersRouter);
 app.use(reviewRouter);
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve arquivos estáticos da pasta uploads
 app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));

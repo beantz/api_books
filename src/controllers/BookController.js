@@ -2,6 +2,9 @@ import { validationResult } from "express-validator";
 import Book from '../models/Book.js';
 import Category from '../models/Categories.js';
 import Review from '../models/Review.js';
+import path from 'path';
+import fs from 'fs';
+
 
 class BookController {
 
@@ -55,40 +58,49 @@ class BookController {
   }
 
   async store(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors: errors.array()
-      });
-    }
-  
-    const { titulo, autor, preco, estado, descricao, categoria_id } = req.body;
-    const imagem = req.file;
-  
+    console.log('=== DADOS RECEBIDOS ===');
+    console.log('Body:', req.body);
+    console.log('File:', req.file ? 'Arquivo presente' : 'Nenhum arquivo');
+    
     try {
+      const { titulo, autor, preco, estado, descricao, categoria_id } = req.body;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({
+          success: false,
+          message: "Nenhuma imagem foi enviada"
+        });
+      }
+
+      console.log('Buscando categoria:', categoria_id);
       const nomeCategoria = await Category.findOne({ nome: categoria_id });
-      const todasCategorias = await Category.find({});
-  
+      
       if (!nomeCategoria) {
         return res.status(400).json({
           success: false,
-          message: `Categoria de nome: "${categoria_id}" não encontrada.`,
-          categorias_disponiveis: todasCategorias.map(c => c.nome)
+          message: `Categoria "${categoria_id}" não encontrada`
         });
       }
-      
-      const baseUrl = process.env.BASE_URL || 'http://192.168.0.105:3000';
-      
-      const imageUrl = imagem ? `${baseUrl}/uploads/${imagem.filename}`.replace(/\\/g, '/') : null;
-  
-      if (!imagem) {
-        return res.status(400).json({
-          success: false,
-          message: "A imagem é obrigatória"
-        });
-      }      
 
+      // Salvar imagem
+      const imageBuffer = file.buffer;
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const filename = `livro-${uniqueSuffix}.jpg`; // Forçar extensão .jpg
+      const filePath = path.join('uploads', filename);
+
+      // Garantir que uploads existe
+      const fs = await import('fs');
+      if (!fs.existsSync('uploads')) {
+        fs.mkdirSync('uploads', { recursive: true });
+      }
+
+      await fs.promises.writeFile(filePath, imageBuffer);
+
+      const baseUrl = process.env.BASE_URL || 'http://192.168.0.105:3000';
+      const imageUrl = `${baseUrl}/uploads/${filename}`;
+
+      // Criar livro
       const newBook = await Book.create({
         titulo,
         autor,
@@ -99,43 +111,28 @@ class BookController {
         categoria_id: nomeCategoria._id,
         imagem: {
           url: imageUrl,
-          filename: imagem.filename
+          filename: filename
         }
       });
-  
+
       await Category.findByIdAndUpdate(
         nomeCategoria._id,
         { $push: { livros_id: newBook._id } }
       );
-  
-      const populatedBook = await Book.findById(newBook._id)
-        .populate('user_id', 'nome email')
-        .populate('categoria_id', 'nome');
-  
+
+      console.log('=== LIVRO CADASTRADO COM SUCESSO ===');
+      
       return res.status(201).json({
         success: true,
-        message: "Livro cadastrado com sucesso!",
-        book: {
-          id: populatedBook._id,
-          titulo: populatedBook.titulo,
-          imagem: populatedBook.imagem?.url,
-          vendedor: {
-            id: populatedBook.user_id?._id,
-            nome: populatedBook.user_id?.nome
-          },
-          categoria: {
-            id: populatedBook.categoria_id?._id,
-            nome: populatedBook.categoria_id?.nome
-          }
-        }
+        message: "Livro cadastrado com sucesso!"
       });
-  
+
     } catch (error) {
-      console.error("Erro ao cadastrar livro:", error);
+      console.error("Erro:", error.message);
+      
       return res.status(500).json({
         success: false,
-        message: "Erro interno no servidor",
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: "Erro interno no servidor"
       });
     }
   }

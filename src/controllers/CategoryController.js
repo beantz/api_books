@@ -5,7 +5,6 @@ class CategoryController {
 
   async index(req, res) {
     try {
-      // Busca apenas os dados básicos das categorias
       const categorias = await Category.find({})
         .select('_id nome createdAt updatedAt') 
         .sort({ nome: 1 }) 

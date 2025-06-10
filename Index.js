@@ -1,4 +1,4 @@
-process.env.TZ = 'UTC'; // Força UTC em todo o Node.js
+process.env.TZ = 'UTC'; 
 
 import 'dotenv-safe/config.js';
 import express, { Router } from 'express';
@@ -20,7 +20,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors({exposedHeaders: ['Content-Disposition']})); 
-app.use(express.json({ limit: '50mb' })); //é um middleware que analisa o corpo das requisições HTTP com o tipo de conteúdo application/json.
+app.use(express.json({ limit: '50mb' }));
 app.use(loginRouter);
 app.use(booksRouter);
 app.use(categoryRouter);
@@ -28,10 +28,18 @@ app.use(usersRouter);
 app.use(reviewRouter);
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Serve arquivos estáticos da pasta uploads
 app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
 
-// Conexão com o MongoDB Atlas
+app.use((error, req, res, next) => {
+  if (error.message === 'Unexpected end of form') {
+    return res.status(400).json({
+      success: false,
+      message: 'Erro no envio da imagem - tente novamente'
+    });
+  }
+  next(error);
+});
+
 mongoose.connect(process.env.MONGODB_URI)
 .then(() => console.log("✅ Conectado ao MongoDB Atlas"))
 .catch(err => console.error("❌ Erro na conexão:", err));

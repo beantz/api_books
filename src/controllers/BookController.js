@@ -58,9 +58,6 @@ class BookController {
   }
 
   async store(req, res) {
-    console.log('=== DADOS RECEBIDOS ===');
-    console.log('Body:', req.body);
-    console.log('File:', req.file ? 'Arquivo presente' : 'Nenhum arquivo');
     
     try {
       const { titulo, autor, preco, estado, descricao, categoria_id } = req.body;
@@ -83,13 +80,11 @@ class BookController {
         });
       }
 
-      // Salvar imagem
       const imageBuffer = file.buffer;
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       const filename = `livro-${uniqueSuffix}.jpg`; // Forçar extensão .jpg
       const filePath = path.join('uploads', filename);
 
-      // Garantir que uploads existe
       const fs = await import('fs');
       if (!fs.existsSync('uploads')) {
         fs.mkdirSync('uploads', { recursive: true });
@@ -100,7 +95,6 @@ class BookController {
       const baseUrl = process.env.BASE_URL || 'http://192.168.0.105:3000';
       const imageUrl = `${baseUrl}/uploads/${filename}`;
 
-      // Criar livro
       const newBook = await Book.create({
         titulo,
         autor,
@@ -168,7 +162,6 @@ class BookController {
   
       await Review.deleteMany({ livro_id: book._id });
   
-      // deleta o livro
       await Book.findByIdAndDelete(id);
   
       return res.status(200).json({

@@ -8,7 +8,7 @@ class ReviewController {
   async store(req, res) {
     try {
       const { comentarios, avaliacao, livro_id } = req.body;
-      const userId = req.user._id; //obtido do middleware JWT
+      const userId = req.user._id;
   
       if (!comentarios || !avaliacao || !livro_id) {
         return res.status(400).json({ error: "Todos os campos são obrigatórios" });
@@ -103,7 +103,7 @@ class ReviewController {
   async deleteReview(req, res) {
     try {
       const { id } = req.params;
-      const userId = req.userId; //obtido do middleware de autenticação
+      const userId = req.userId; 
   
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({

@@ -14,6 +14,8 @@
   - Publicação de livros para venda/doação
   - Busca e filtragem de livros
   - Sistema de avaliações e comentários
+  - Cadastro de usuários
+  - Redirecionamente para contato de vendedor via WhatsApp
 
 ### Segurança
 
@@ -28,7 +30,8 @@
   - MongoDB
   - JWT (JSON Web Token)
   - Nodemailer (para envio de e-mails)
-  - Docker 
+  - Docker
+  - Speakeasy (Biblioteca popular para geração e verificação de códigos de autenticação de dois fatores (2FA) em Node.js)
 
 ## 📁 Estrutura de Pastas
 

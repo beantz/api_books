@@ -72,17 +72,10 @@ class BookController {
 
       console.log('Buscando categoria:', categoria_id);
       const nomeCategoria = await Category.findOne({ nome: categoria_id });
-      
-      if (!nomeCategoria) {
-        return res.status(400).json({
-          success: false,
-          message: `Categoria "${categoria_id}" não encontrada`
-        });
-      }
 
       const imageBuffer = file.buffer;
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const filename = `livro-${uniqueSuffix}.jpg`; // Forçar extensão .jpg
+      const filename = `livro-${uniqueSuffix}.jpg`; 
       const filePath = path.join('uploads', filename);
 
       const fs = await import('fs');
@@ -93,7 +86,7 @@ class BookController {
       await fs.promises.writeFile(filePath, imageBuffer);
 
       const baseUrl = process.env.BASE_URL || 'http://192.168.0.105:3000';
-      const imageUrl = `${baseUrl}/uploads/${filename}`;
+      const imageUrl = `http://${baseUrl}/uploads/${encodeURIComponent(filename)}`;
 
       const newBook = await Book.create({
         titulo,
@@ -114,7 +107,7 @@ class BookController {
         { $push: { livros_id: newBook._id } }
       );
 
-      console.log('=== LIVRO CADASTRADO COM SUCESSO ===');
+      console.log(newBook);
       
       return res.status(201).json({
         success: true,

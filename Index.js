@@ -28,7 +28,8 @@ app.use(usersRouter);
 app.use(reviewRouter);
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
+// app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use((error, req, res, next) => {
   if (error.message === 'Unexpected end of form') {

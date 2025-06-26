@@ -30,6 +30,7 @@
   - MongoDB
   - JWT (JSON Web Token)
   - Nodemailer (para envio de e-mails)
+  - Multer (middleware para Node.js projetado especificamente para lidar com uploads de arquivos em aplicações web)
   - Docker
   - Speakeasy (Biblioteca popular para geração e verificação de códigos de autenticação de dois fatores (2FA) em Node.js)
 
